@@ -7,18 +7,18 @@ Created on Thu May  8 14:53:21 2025
 """
 
 ###########################################################################################################################
-# ================== ELIJO EL BLOQUE DE MODELOS Y DATASETS A USAR ==================
-USE_MODEL_PAIR = 'se_resnet50'         # opciones: 'resnet50', 'seresnet50', 'resnet101', 'seresnet50_IBN'. 'resnet_50_101 NOTA: AÑADE MODELOS FACIL ABAJO
-USE_DATASET_SET = 'All_combined_Augm'   # opciones: 'original_sr_st', 'augmv1_augmv2', 'original_3x'
-METRIC_LOSS_TYPE = 'triplet_center'  # opciones: 'triplet_center', 'quadruplet'
-USE_MODEL_TYPE = 'BoT'  # Opciones: 'BoT', 'PaT'
-USE_UNIFIED_MODEL = True  # True es para unified, False para por clases NOTA: No está refinado, falta terminar  -> Meanwhile por False
-previous_fine_tuning = False  # True hace un fine tuning antes en UA,M, para no hacerlo FALSE
+# ================== Combination of model(s) and dataset(s)  ==================
+USE_MODEL_PAIR = 'se_resnet50'         # Some options: 'resnet50', 'seresnet50', 'resnet101', 'seresnet50_IBN'. 'resnet_50_101 NOTE: ADD MODELS EASILY BELOW BY ADDING THE PATH
+USE_DATASET_SET = 'All_combined_Augm'   # Some opction: 'original_sr_st', 'augmv1_augmv2', 'original_3x' NOTE: ADD MODELS EASILY BELOW BY ADDING THE PATH
+METRIC_LOSS_TYPE = 'triplet_center'  # options: 'triplet_center', 'quadruplet'
+USE_MODEL_TYPE = 'BoT'  # Opctions: 'BoT', 'PaT'
+USE_UNIFIED_MODEL = True  # True is for unified, False for classes aware training
+previous_fine_tuning = False  # True is for fine tuning before on "campus dataset", to avoid it set this to FALSE
 training_on_UAM = False
 specific_size = False
 rerank_class = True
 epochs = 85
-verbosity = 1 # 1 Para que muestre, 0 no muestra nada por terminal
+verbosity = 1 # If you want to see the evolution of the process in the terminal set it to 1
 ###################################################
 
 
@@ -41,7 +41,6 @@ import random
 
 # REPRODUCIBILITY
 seed = 42
-
 os.environ['PYTHONHASHSEED'] = str(seed)
 random.seed(seed)
 np.random.seed(seed)
@@ -52,7 +51,7 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
 
-# ================== CONFIGURACIÓN GENERAL ==================
+# ================== General config ==================
 CLASSES = ["Containers", "Rubish", "Crosswalks"]
 TRANSFER_ROOT = "/home/mdb/reid-strong-baseline/TRANSFER_Learning_SR_ensembling_BestEnsemb_Repeated/"
 KAGGLE_ROOT = "/home/mdb/DL_Lab3/Kaggle_Dataset"
@@ -70,7 +69,7 @@ UPDATE_SCRIPT = "tools/update.py"
 
 
 
-###################################### MODELOS
+###################################### MODELS Selection
 MODEL_CONFIGS = {
     'resnet50': {
         'models': ['resnet50', 'resnet50_ibn_a'],
@@ -158,7 +157,7 @@ MODEL_CONFIGS = {
     },
 }
 
-#################################### DATASETS
+#################################### DATASETS Selection
 DATASET_CONFIGS = {
     'original': {
         "base": {
@@ -218,7 +217,7 @@ DATASET_CONFIGS = {
 
 
 
-# ================== Rutas unificadas ==================
+# ================== Unified paths (without class aware) ==================
 UNIFIED_DATASET_PATHS = {
     'original_3x': {
         "base": {
@@ -310,15 +309,15 @@ BASE_YAML_TEMPLATE = {
         'PRETRAIN_CHOICE': 'imagenet',
         'NAME': None,
         'PRETRAIN_PATH': None,
-        'METRIC_LOSS_TYPE': 'triplet_center',  # Cambiar de 'triplet_center' a 'quadruplet'
+        'METRIC_LOSS_TYPE': 'triplet_center',  
         'IF_LABELSMOOTH': 'on',
-        'IF_WITH_CENTER': 'yes',            # Center loss NO compatible con quadruplet (habria que implementarlo)
+        'IF_WITH_CENTER': 'yes',            # Center loss NOT compatible with quadruplet (needs implementation)
     },
     'INPUT': {
         'SIZE_TRAIN': [256, 256],
         'SIZE_TEST': [256, 256],
-        'PROB': 0.5,                 # Mod el 4 de mayo de 0.5 a 0.65
-        'RE_PROB': 0.5,              # Mod el 4 de mayo de 0.5 a 0.65
+        'PROB': 0.5,            
+        'RE_PROB': 0.5,        
         'PADDING': 10,
     },
     'DATASETS': {
@@ -362,12 +361,12 @@ BASE_YAML_TEMPLATE = {
     
     'TEST': {
         'IMS_PER_BATCH': 128,
-        'RE_RANKING': 'no',          # Mod el 4 de mayo de no a yes
+        'RE_RANKING': 'no',        
         'NECK_FEAT': 'after'
     }
 }
 
-# ============================================================================================================ Funciones auxiliares ==================
+# ============================================================================================================ Aux functions ==================
 
 def run_training(config_path):
     if verbosity == 0:
@@ -423,7 +422,7 @@ def fusionar_tracks(track_paths, output_path, topk=100, decay=0.075):
             top_preds = [str(idx) for idx, _ in sorted_preds[:topk]]
             fout.write(" ".join(top_preds) + "\n")
 
-# ================== Entrenamiento y Update ==================
+# ================== Train and Update ==================
 os.makedirs(TRANSFER_ROOT, exist_ok=True)
 
 for class_name in CLASSES:
@@ -466,12 +465,11 @@ for class_name in CLASSES:
                 uam_yaml['OUTPUT_DIR'] = uam_output_dir
      
                 if METRIC_LOSS_TYPE == 'quadruplet':
-                    uam_yaml['MODEL']['IF_WITH_CENTER'] = 'no'  # No usar center
+                    uam_yaml['MODEL']['IF_WITH_CENTER'] = 'no'  
                     uam_yaml['MODEL']['METRIC_LOSS_TYPE'] = 'quadruplet'
                     uam_yaml['SOLVER']['QUADRUPLET_MARGIN1'] = 0.3
                     uam_yaml['SOLVER']['QUADRUPLET_MARGIN2'] = 0.3
                 
-                # Ajustar tamaño de imagen y parámetros específicos por clase
                 if specific_size:
                     if class_name == "Rubish":
                         uam_yaml['INPUT']['SIZE_TRAIN'] = [160, 224]
@@ -486,9 +484,7 @@ for class_name in CLASSES:
                         uam_yaml['INPUT']['SIZE_TEST'] = [128, 160]
                     
                     
-                # Parámetros comunes mejorados para todas las clases
-
-                # ================== Ajustes específicos según tipo de modelo ==================
+                # ================== Specific adjusts for PAT ==================
                 if USE_MODEL_TYPE == 'PaT':
                     # Sustituye 'NAMES' por 'TRAIN' y define 'TEST'
                     uam_yaml['DATASETS']['TRAIN'] = uam_yaml['DATASETS'].pop('NAMES', ['UAM'])
@@ -497,21 +493,11 @@ for class_name in CLASSES:
                     uam_yaml['LOG_ROOT'] = uam_output_dir  # obligatorio para PaT
                     uam_yaml['TB_LOG_ROOT'] = os.path.join(uam_output_dir, 'tb')  # o cualquier path válido
                     
-                    # Cambiar WARMUP_ITERS -> WARMUP_EPOCHS si existe
                     if 'WARMUP_ITERS' in uam_yaml['SOLVER']:
                         uam_yaml['SOLVER']['WARMUP_EPOCHS'] = uam_yaml['SOLVER'].pop('WARMUP_ITERS')
                         
-                    # Corrige booleanos para PaT
                     uam_yaml['TEST']['RE_RANKING'] = uam_yaml['TEST']['RE_RANKING'].lower() == 'yes'
                     #uam_yaml['TEST']['FEAT_NORM'] = uam_yaml['TEST']['FEAT_NORM'].lower() == 'True'
-    
-                # Asegurar tipos booleanos para claves del bloque TEST
-                # for key in ['RE_RANKING', 'FEAT_NORM']:
-                #     if isinstance(uam_yaml['TEST'].get(key), str):
-                #         uam_yaml['TEST'][key] = uam_yaml['TEST'][key].lower() == 'True'
-                #     elif key not in uam_yaml['TEST']:
-                #         uam_yaml['TEST'][key] = True  # valor por defecto
-    
     
                 uam_yaml_path = os.path.join(uam_output_dir, "train_uam.yaml")
                 with open(uam_yaml_path, 'w') as f:
@@ -519,7 +505,7 @@ for class_name in CLASSES:
     
                 run_training(uam_yaml_path)
                 
-                # ================== Evaluar UAM ==================
+                # ================== Evaluate in UAM ==================
                 try:
                     if USE_MODEL_TYPE == 'PaT':
                         latest_ckpt = sorted([f for f in os.listdir(uam_output_dir) if f.endswith('.pth')],
@@ -530,7 +516,6 @@ for class_name in CLASSES:
                                              key=lambda x: os.path.getmtime(os.path.join(uam_output_dir, x)), reverse=True)[0]
                         pretrained_uam_ckpt = os.path.join(uam_output_dir, latest_ckpt)
                 
-                    # Crear yaml de test UAM
                     update_uam_yaml = copy.deepcopy(uam_yaml)
                     update_uam_yaml['MODEL']['PRETRAIN_CHOICE'] = 'self'
                     update_uam_yaml['TEST']['WEIGHT'] = pretrained_uam_ckpt
@@ -553,7 +538,6 @@ for class_name in CLASSES:
                     # Lanzamos update sin salida
                     run_update(update_uam_path, track_path_uam)
                 
-                    # Evaluar y mostrar resultado
                     eval_proc = subprocess.run([
                         "python", "Evaluate_UrbAM-ReID.py",
                         "--track", track_path_uam,
@@ -596,14 +580,10 @@ for class_name in CLASSES:
             rivas_yaml['MODEL']['PRETRAIN_CHOICE'] = 'self' if previous_fine_tuning else 'imagenet'
             
             
-            # Asignar el dataset de RIVAS
             rivas_yaml['DATASETS']['ROOT_DIR'] = paths["RIVAS"].format(class_name)
             
-            # Configurar salida de logs
             rivas_yaml['OUTPUT_DIR'] = rivas_output_dir
-            
-            
-            # Dataset de entrenamiento y test
+        
             if USE_MODEL_TYPE == 'PaT':
                 rivas_yaml['LOG_NAME'] = rivas_output_dir
                 rivas_yaml['DATASETS']['TRAIN'] = ['UAM',]
@@ -611,7 +591,6 @@ for class_name in CLASSES:
                 rivas_yaml['LOG_ROOT'] = rivas_output_dir
                 rivas_yaml['TB_LOG_ROOT'] = os.path.join(rivas_output_dir, 'tb')
             
-                # Asegurar que los booleanos están como bool, no como string
                 for key in ['RE_RANKING', 'FEAT_NORM']:
                     if isinstance(rivas_yaml['TEST'].get(key), str):
                         rivas_yaml['TEST'][key] = rivas_yaml['TEST'][key].lower() == 'True'
@@ -622,7 +601,6 @@ for class_name in CLASSES:
                 rivas_yaml['SOLVER']['QUADRUPLET_MARGIN1'] = 0.3
                 rivas_yaml['SOLVER']['QUADRUPLET_MARGIN2'] = 0.3
                 
-            # COMENTAR/QUITAR ESTO:
             rivas_yaml['MODEL'] = yaml_model_section.copy()
             rivas_yaml['MODEL']['PRETRAIN_PATH'] = pretrained_uam_ckpt            
             if specific_size:
@@ -718,7 +696,7 @@ for class_name in CLASSES:
             print("Update completado!!!!")
             
 
-# ================== Fusión ResNet+IBN para cada dataset ==================
+# ================== Mixing the results of different models ==================
 for class_name in CLASSES:
     for pair_name in DATASET_PAIRS.keys():
         for domain in ["RIVAS"]:
@@ -747,7 +725,7 @@ for class_name in CLASSES:
                 print(f"[WARNING] No se pudo realizar fusión por falta de embeddings en {domain}")
                 continue
 
-            # ================== FUSIÓN POR MEDIA ==================
+            # ================== By avg ==================
             qf_mean = l2norm(np.mean(qfs, axis=0))
             gf_mean = l2norm(np.mean(gfs, axis=0))
 
@@ -764,7 +742,7 @@ for class_name in CLASSES:
                     adjusted = [str(i + 1) for i in row[:100]]
                     f.write(" ".join(adjusted) + "\n")
 
-            # ================== FUSIÓN POR CONCATENACIÓN ==================
+            # ================== By concat ==================
             qf_concat = l2norm(np.concatenate(qfs, axis=1))
             gf_concat = l2norm(np.concatenate(gfs, axis=1))
 
@@ -781,7 +759,7 @@ for class_name in CLASSES:
                     adjusted = [str(i + 1) for i in row[:100]]
                     f.write(" ".join(adjusted) + "\n")
 
-            # ================== EVALUAR SOLO SI ES UAM ==================
+            # ================== evaluate only if we are on UAM ==================
             if domain == "UAM":
                 dataset_path = DATASET_PAIRS[pair_name]["UAM"].format(class_name)
 
@@ -798,7 +776,7 @@ for class_name in CLASSES:
                         print(f"[WARNING] Falló evaluación para {track_path}: {e}")
 
 
-# ================== Fusión ponderada final entre datasets (track_mean y track_concat) ==================
+# ================== Final fussion between datasets ==================
 for class_name in CLASSES:
     for domain in ["RIVAS"]:
         for variant in ["track_mean.txt", "track_concat.txt"]:
@@ -824,7 +802,6 @@ for class_name in CLASSES:
             fused_track_path = os.path.join(output_fused, variant)
             fusionar_tracks(tracks, fused_track_path)
 
-            # Evaluación solo si es UAM
             if domain == "UAM":
                 try:
                     first_dataset_path = list(DATASET_PAIRS.values())[0]["UAM"].format(class_name)
@@ -838,10 +815,10 @@ for class_name in CLASSES:
                 except Exception as e:
                     print(f"[WARNING] Error al evaluar en UAM ({variant}) para {class_name}: {e}")
 
-# ================== Generación de archivo de SUBMISSION para Kaggle ==================
+# ================== Generating the submission file for Kaggle ==================
 print("\n================== Generando submission ==================")
 
-# ================== FUNCIONES AUXILIARES ==================
+# ================== Aux fct ==================
 def parse_items(xml_path):
     tree = ET.parse(xml_path)
     return [item.attrib["imageName"] for item in tree.getroot().findall("Item")]
@@ -849,19 +826,19 @@ def parse_items(xml_path):
 def extract_number(filename):
     return str(int(filename.replace(".jpg", "").lstrip("0") or "0"))
 
-# ================== Generación de archivo de SUBMISSION para Kaggle (track_mean y track_concat) ==================
+# ================== Generating the submission ==================
 print("\n================== Generando submission (mean y concat) ==================")
 
 for variant in ["track_mean.txt", "track_concat.txt"]:
     print(f"\n--- Procesando variante: {variant} ---")
 
-    # ================== SALIDAS ==================
+    # ================== Outputs ==================
     names_file = results_dir / f"Results_RIVAS_ALL_names_{variant.replace('.txt','')}.txt"
     indices_file = results_dir / f"Results_RIVAS_ALL_indices_{variant.replace('.txt','')}.txt"
     submission_file = results_dir / f"RESULT_SUBMISSION_{variant.replace('.txt','')}.txt"
     output_csv_path = results_dir / f"kaggle_submission_converted_1based_{variant.replace('.txt','')}.csv"
 
-    # ================== PASO 1: GENERAR NOMBRES POR CLASE ==================
+    # ================== Step 1: Generate a name per class ==================
     all_entries = []
 
     for cls in CLASSES:
@@ -891,7 +868,7 @@ for variant in ["track_mean.txt", "track_concat.txt"]:
                     gallery_preds.append("error.jpg")
             all_entries.append((qname, gallery_preds))
 
-    # ================== PASO 2: ORDEN GLOBAL Y GUARDAR NOMBRES ==================
+    # ================== Step 2: Global order and saving the names ==================
     global_query_names = parse_items(global_query_xml)
     query_to_predictions = {q: preds for q, preds in all_entries}
 
@@ -912,7 +889,7 @@ for variant in ["track_mean.txt", "track_concat.txt"]:
 
     print(f"Guardado NOMBRES en: {names_file}")
 
-    # ================== PASO 3: CONVERTIR A ÍNDICES NUMÉRICOS ==================
+    # ================== Step 3: Convert to numerical order ==================
     with open(names_file, "r") as fin:
         lines = fin.readlines()
 
@@ -924,7 +901,7 @@ for variant in ["track_mean.txt", "track_concat.txt"]:
 
     print(f"Guardado ÍNDICES en: {indices_file}")
 
-    # ================== PASO 4: ELIMINAR ÍNDICE DE QUERY PARA SUBMISSION FINAL ==================
+    # ================== Step 4: Delete de index of the query ==================
     with open(indices_file, "r") as fin, open(submission_file, "w") as fout:
         for line in fin:
             parts = line.strip().split()
@@ -932,7 +909,7 @@ for variant in ["track_mean.txt", "track_concat.txt"]:
 
     print(f"Guardado RESULT_SUBMISSION en: {submission_file}")
 
-    # ================== PASO 5: CREAR CSV PARA KAGGLE SUBMISSION ==================
+    # ================== Step 5: Create the final CSV to upload it on Kaggle ==================
     with open(submission_file, "r") as f:
         prediction_lines = [line.strip().split() for line in f.readlines()]
 
@@ -959,7 +936,7 @@ for variant in ["track_mean.txt", "track_concat.txt"]:
     print(f"CSV convertido para Kaggle guardado en: {output_csv_path}")
     print(f"Índices predichos: mínimo={min_idx} | máximo={max_idx}")
 
-    # ================== AVISO FINAL ==================
+    # ================== Warning ==================
     if missing:
         print(f"WARNING: {len(missing)} queries faltantes (ejemplo: {missing[:5]})")
 
