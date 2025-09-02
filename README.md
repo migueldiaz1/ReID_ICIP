@@ -4,10 +4,10 @@ The pipeline covers all the steps of the training and evaluation process, except
 
 In addition, we provide:
 
-A link to the trained weights of the best-performing model.
+- A link to the trained weights of the best-performing model.
 
-A link to the dataset variant that yielded the best results.
+- A link to the dataset variant that yielded the best results.
 
-The final results obtained with this configuration.
+- The final results obtained with this configuration.
 
 This way, the entire workflow—from dataset preparation to model training and evaluation—can be reproduced and extended by other researchers.
