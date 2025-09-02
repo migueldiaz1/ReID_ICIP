@@ -10,4 +10,6 @@ In addition, we provide [https://drive.google.com/drive/folders/190rlARYUD5_4RPh
 
 - The final results obtained with this configuration.
 
+- A link to the Super-Resolution and Style-Transfer codes used for creat those images : [https://www.kaggle.com/code/migueldazbenito/reid-sr-styletransfer](https://www.kaggle.com/code/migueldazbenito/reid-sr-styletransfer) and [https://www.kaggle.com/code/migueldazbenito/reid-sr](https://www.kaggle.com/code/migueldazbenito/reid-sr)
+
 This way, the entire workflow, from dataset preparation to model training and evaluation—can be reproduced and extended by other researchers.
