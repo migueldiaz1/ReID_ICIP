@@ -2,7 +2,7 @@ This solution is based on BoT (Bag of Tricks), but with several modifications. Y
 
 The pipeline covers all the steps of the training and evaluation process, except for the creation of the dataset variants. To make our work fully reproducible, we have also uploaded in this repository the code required to implement the dataset modifications we introduced.
  
-In addition, we provide [https://zenodo.org/records/17039479?preview=1&token=eyJhbGciOiJIUzUxMiJ9.eyJpZCI6ImM3MzZkOTFhLWFkNTUtNDgyOC1hN2EwLWRjNTg2OTgzNTAxZCIsImRhdGEiOnt9LCJyYW5kb20iOiI1ZjY5ZDRmZjkyMjQzYmY5MTI2MGFkYTk0ZWE5NDEzOSJ9.e4S2EI6SAPckc_zqAv8lIlIoTPjGYQaHA9goHwwdFFMxzCEqy2tOoM_o9Hb-SKsJQ5X1lV7xt4IkCYCP_f-hWA](https://zenodo.org/records/17039479?preview=1&token=eyJhbGciOiJIUzUxMiJ9.eyJpZCI6IjQ1ZGYxNzkzLTNlNzktNDYxOC05ZThjLTA5NjdlMzJiZjI4NiIsImRhdGEiOnt9LCJyYW5kb20iOiI0YzgzMDNhMjE5NGE4MGRmMmJkOGVjZTcxMzllZGYzMiJ9.8ZxuHiQGPniaDUz0RvV8RV9cUOyYr3t-ovfSxoal-qVHCd-dPQkjKzSddMav3B-M06KpdOi3-ZC48TY_7R1OuA):
+In addition, we provide [https://drive.google.com/drive/folders/190rlARYUD5_4RPh_33xMUzoil7Oq0A8k?usp=drive_link](https://drive.google.com/drive/folders/190rlARYUD5_4RPh_33xMUzoil7Oq0A8k?usp=drive_link):
 
 - A link to the trained weights of the best-performing model.
 
